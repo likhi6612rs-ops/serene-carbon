@@ -77,14 +77,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "serene" },
+      { name: "description", content: "Lavender Footprint is a web application that calculates and tracks your daily carbon footprint." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "serene" },
+      { property: "og:description", content: "Lavender Footprint is a web application that calculates and tracks your daily carbon footprint." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "serene" },
+      { name: "twitter:description", content: "Lavender Footprint is a web application that calculates and tracks your daily carbon footprint." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9da9f022-bad5-4264-94b3-9b295b4c84d1/id-preview-138410bb--34d035e7-e8b4-40c5-9504-8c720e185fd8.lovable.app-1781610001987.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9da9f022-bad5-4264-94b3-9b295b4c84d1/id-preview-138410bb--34d035e7-e8b4-40c5-9504-8c720e185fd8.lovable.app-1781610001987.png" },
     ],
     links: [
       {
