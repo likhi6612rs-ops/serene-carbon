@@ -11,7 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { BeamsBackground } from "@/components/ui/beams-background";
+import { Component as EtherealShadow } from "@/components/ui/etheral-shadow";
 
 function NotFoundComponent() {
   return (
@@ -123,7 +123,16 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <BeamsBackground intensity="medium" />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 -z-10"
+      >
+        <EtherealShadow
+          color="rgba(180, 160, 220, 1)"
+          animation={{ scale: 60, speed: 70 }}
+          noise={{ opacity: 0.4, scale: 1.2 }}
+        />
+      </div>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
     </QueryClientProvider>
