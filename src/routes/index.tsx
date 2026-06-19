@@ -113,8 +113,8 @@ function Index() {
   const vsAverage = breakdown.total - DAILY_GLOBAL_AVERAGE;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-card/60 backdrop-blur">
+    <div className="min-h-screen text-foreground">
+      <header className="border-b border-border/60 bg-card/40 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-5">
           <div
             aria-hidden="true"
