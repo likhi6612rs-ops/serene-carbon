@@ -14,13 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      footprints: {
+        Row: {
+          created_at: string
+          date: string
+          energy: number
+          food: number
+          id: string
+          total: number
+          transport: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          energy?: number
+          food?: number
+          id?: string
+          total?: number
+          transport?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          energy?: number
+          food?: number
+          id?: string
+          total?: number
+          transport?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_serene_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
