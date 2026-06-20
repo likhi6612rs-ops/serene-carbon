@@ -145,3 +145,31 @@ export function getReductionTips(
 
 /** Global average daily footprint (~13.4 kg CO2e/day per person). */
 export const DAILY_GLOBAL_AVERAGE = 13.4;
+
+/**
+ * Rotating daily wellness + sustainability tips, deterministically selected
+ * by the system date so they change automatically every day with no manual
+ * refresh. Bridges health + planet — fitting the SERENE coach persona.
+ */
+export const DAILY_TIPS: string[] = [
+  "Walk or cycle one short errand today — it's good for your heart and cuts ~0.5 kg CO₂e versus driving.",
+  "Swap one meat meal for beans or lentils — high-fiber, satisfying, and roughly 4× lower carbon.",
+  "Take the stairs whenever you can — small daily cardio, zero emissions.",
+  "Drink tap water in a reusable bottle. Better hydration, no plastic footprint.",
+  "Air-dry your laundry today. Saves ~2 kg CO₂e and keeps fabrics in better shape.",
+  "Eat a colorful plant-based breakfast — fiber-rich foods support metabolism and a low-carbon diet.",
+  "Batch your errands into one trip — less driving, less stress, less CO₂.",
+  "Unplug idle electronics tonight. Phantom loads add up to ~10% of household electricity.",
+  "Try a 10-minute walk after a meal — helps blood sugar and replaces a short drive.",
+  "Lower your thermostat by 1°C — easier on lungs, ~10% less heating CO₂.",
+  "Choose seasonal local produce — fresher nutrients, far less transport carbon.",
+  "Skip one streaming session and go outside — better sleep, lower data-center load.",
+  "Cook one extra portion and pack lunch tomorrow — saves money, food waste, and emissions.",
+  "Shorten your shower by 2 minutes. Better skin, ~0.7 kg CO₂e saved on hot water.",
+];
+
+/** Pick a deterministic tip of the day based on the current date. */
+export function getDailyTip(date: Date = new Date()): string {
+  const dayIndex = Math.floor(date.getTime() / 86_400_000);
+  return DAILY_TIPS[((dayIndex % DAILY_TIPS.length) + DAILY_TIPS.length) % DAILY_TIPS.length];
+}
