@@ -9,13 +9,27 @@ interface ChatMessage {
   content: string;
 }
 
-export function InsightChat({ footprint }: { footprint: FootprintBreakdown }) {
+export interface InsightHistoryEntry {
+  date: string;
+  total: number;
+  transport: number;
+  food: number;
+  energy: number;
+}
+
+export function InsightChat({
+  footprint,
+  history = [],
+}: {
+  footprint: FootprintBreakdown;
+  history?: InsightHistoryEntry[];
+}) {
   const ask = useServerFn(getInsight);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
       content:
-        "Hi — I'm SERENE. Ask me about your footprint and I'll suggest a small change you can try.",
+        "Hi — I'm SERENE, your lifestyle & sustainability coach. Ask me anything — health, habits, or your footprint. I'll always answer your question first, then share how it can help the planet too.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -36,6 +50,7 @@ export function InsightChat({ footprint }: { footprint: FootprintBreakdown }) {
         data: {
           messages: next.map((m) => ({ role: m.role, content: m.content })),
           footprint,
+          history,
         },
       });
       setMessages([...next, { role: "assistant", content: res.reply || "(no reply)" }]);
