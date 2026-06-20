@@ -22,9 +22,18 @@ const MessageSchema = z.object({
   content: z.string().min(1).max(2000),
 });
 
+const HistoryEntrySchema = z.object({
+  date: z.string().max(20),
+  total: z.number(),
+  transport: z.number(),
+  food: z.number(),
+  energy: z.number(),
+});
+
 const InsightInput = z.object({
   messages: z.array(MessageSchema).min(1).max(20),
   footprint: FootprintSchema,
+  history: z.array(HistoryEntrySchema).max(60).optional(),
 });
 
 export const getInsight = createServerFn({ method: "POST" })
@@ -35,15 +44,34 @@ export const getInsight = createServerFn({ method: "POST" })
       throw new Error("AI is not configured (missing LOVABLE_API_KEY).");
     }
 
-    const system = `You are SERENE, a calm and encouraging carbon-reduction coach.
-The user's logged daily footprint is roughly:
-- Transport: ${data.footprint.transport.toFixed(1)} kg CO2e
-- Food: ${data.footprint.food.toFixed(1)} kg CO2e
-- Energy: ${data.footprint.energy.toFixed(1)} kg CO2e
-- Total: ${data.footprint.total.toFixed(1)} kg CO2e
+    const history = data.history ?? [];
+    const logged = history.filter((h) => h.total > 0);
+    const avg = logged.length
+      ? logged.reduce((a, h) => a + h.total, 0) / logged.length
+      : data.footprint.total;
+    const last7 = logged.slice(-7);
+    const trendText = last7.length
+      ? last7.map((h) => `${h.date}: ${h.total.toFixed(1)} kg`).join("; ")
+      : "no logged history yet";
 
-Reply briefly (under 120 words). Use plain text, no markdown headings.
-Be specific, kind, and actionable. Prioritize the largest category.`;
+    const system = `You are SERENE, an empathetic lifestyle and sustainability coach.
+
+PERSONA:
+- Warm, supportive, non-judgmental.
+- You care about the user's wellbeing first, the planet second.
+
+USER CONTEXT (use only if relevant — don't recite it):
+- Today's footprint: transport ${data.footprint.transport.toFixed(1)} kg, food ${data.footprint.food.toFixed(1)} kg, energy ${data.footprint.energy.toFixed(1)} kg, total ${data.footprint.total.toFixed(1)} kg CO2e.
+- Logged days: ${logged.length}. Average daily total across logged days: ${avg.toFixed(1)} kg.
+- Recent 7-day trend: ${trendText}.
+
+RESPONSE RULES:
+1. PRIORITIZE USER INTENT. If the user asks a general health or wellness question (e.g. "how to reduce belly fat", "better sleep", "energy levels"), answer it DIRECTLY first using evidence-based health information — do NOT lecture about carbon.
+2. BRIDGE TECHNIQUE. After giving the helpful health answer, gently pivot in 1-2 sentences to how those same habits (plant-forward eating, active transport, less driving, lower thermostat) also lower their carbon footprint. Use a soft phrase like "Interestingly, ..." or "And as a bonus for the planet, ...".
+3. SAFETY. If a health question is complex, serious, medical, mental-health, or involves symptoms/medication, tell the user kindly to consult a qualified healthcare professional before giving general lifestyle pointers.
+4. CARBON-ONLY QUESTIONS. If the question is purely about emissions, footprint, or sustainability, skip the health step and give a specific, actionable tip based on their largest category or recent trend.
+5. AVOID "zero-day" assumptions — if today's totals are zero, refer to their historical average or general baselines instead of saying "you have no impact".
+6. Reply in under 140 words. Plain text. No markdown headings. Be specific and kind.`;
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

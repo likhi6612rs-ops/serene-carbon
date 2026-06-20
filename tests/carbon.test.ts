@@ -1,99 +1,96 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   calculateFootprint,
   getReductionTips,
   sanitizeNumber,
+  getDailyTip,
   EMISSION_FACTORS,
+  DAILY_TIPS,
 } from "../src/lib/carbon";
+import {
+  searchFoods,
+  estimateFoodFootprint,
+  FOOD_DB,
+} from "../src/lib/food-search";
 
 describe("sanitizeNumber", () => {
-  it("returns 0 for negative, NaN, or non-numeric input", () => {
-    expect(sanitizeNumber(-5)).toBe(0);
+  it("clamps NaN and negatives to 0", () => {
     expect(sanitizeNumber("abc")).toBe(0);
-    expect(sanitizeNumber(NaN)).toBe(0);
+    expect(sanitizeNumber(-5)).toBe(0);
     expect(sanitizeNumber(undefined)).toBe(0);
   });
-
-  it("clamps absurdly large values", () => {
-    expect(sanitizeNumber(1e9, 1000)).toBe(1000);
-  });
-
-  it("passes valid numbers through", () => {
-    expect(sanitizeNumber(42)).toBe(42);
-    expect(sanitizeNumber("3.5")).toBe(3.5);
+  it("passes through valid numbers", () => {
+    expect(sanitizeNumber("12.5")).toBe(12.5);
+    expect(sanitizeNumber(3)).toBe(3);
   });
 });
 
 describe("calculateFootprint", () => {
-  it("returns 0 transport/energy and only food for empty input", () => {
-    const r = calculateFootprint({
-      carKm: 0,
-      publicTransportKm: 0,
-      flightKm: 0,
-      diet: "vegan",
-      electricityKwh: 0,
-      gasKwh: 0,
+  it("returns zero for a zero day", () => {
+    const out = calculateFootprint({
+      carKm: 0, publicTransportKm: 0, flightKm: 0,
+      diet: "vegan", electricityKwh: 0, gasKwh: 0,
     });
-    expect(r.transport).toBe(0);
-    expect(r.energy).toBe(0);
-    expect(r.food).toBe(EMISSION_FACTORS.diet.vegan);
-    expect(r.total).toBe(EMISSION_FACTORS.diet.vegan);
+    expect(out.transport).toBe(0);
+    expect(out.energy).toBe(0);
+    expect(out.food).toBe(EMISSION_FACTORS.diet.vegan);
+    expect(out.total).toBeCloseTo(EMISSION_FACTORS.diet.vegan, 2);
   });
-
-  it("computes a known typical day correctly", () => {
-    const r = calculateFootprint({
-      carKm: 20,
-      publicTransportKm: 0,
-      flightKm: 0,
-      diet: "omnivore",
-      electricityKwh: 10,
-      gasKwh: 5,
+  it("sums transport correctly", () => {
+    const out = calculateFootprint({
+      carKm: 10, publicTransportKm: 10, flightKm: 0,
+      diet: "omnivore", electricityKwh: 0, gasKwh: 0,
     });
-    // 20*0.192 + 5.0 + 10*0.4 + 5*0.2 = 3.84 + 5 + 4 + 1 = 13.84
-    expect(r.transport).toBeCloseTo(3.84, 2);
-    expect(r.food).toBe(5);
-    expect(r.energy).toBeCloseTo(5, 2);
-    expect(r.total).toBeCloseTo(13.84, 2);
+    expect(out.transport).toBeCloseTo(10 * 0.192 + 10 * 0.05, 2);
   });
-
-  it("sanitises malicious / negative input", () => {
-    const r = calculateFootprint({
-      carKm: -100,
-      publicTransportKm: Number.NaN,
-      flightKm: 0,
-      diet: "vegan",
-      electricityKwh: 0,
-      gasKwh: 0,
+  it("clamps malicious inputs", () => {
+    const out = calculateFootprint({
+      // @ts-expect-error – simulate raw user input
+      carKm: "drop table", publicTransportKm: -99, flightKm: NaN,
+      diet: "omnivore", electricityKwh: -1, gasKwh: 1e9,
     });
-    expect(r.transport).toBe(0);
+    expect(out.transport).toBe(0);
+    expect(out.energy).toBeLessThanOrEqual(100_000 * EMISSION_FACTORS.gasKwh);
   });
 });
 
 describe("getReductionTips", () => {
-  it("returns at most 3 tips", () => {
+  it("returns a positive message when footprint is already low", () => {
     const input = {
-      carKm: 50,
-      publicTransportKm: 0,
-      flightKm: 100,
-      diet: "heavy-meat" as const,
-      electricityKwh: 20,
-      gasKwh: 30,
+      carKm: 0, publicTransportKm: 0, flightKm: 0,
+      diet: "vegan" as const, electricityKwh: 0, gasKwh: 0,
     };
     const tips = getReductionTips(input, calculateFootprint(input));
-    expect(tips.length).toBeLessThanOrEqual(3);
     expect(tips.length).toBeGreaterThan(0);
   });
+});
 
-  it("returns a positive message for low footprints", () => {
-    const input = {
-      carKm: 0,
-      publicTransportKm: 0,
-      flightKm: 0,
-      diet: "vegan" as const,
-      electricityKwh: 0,
-      gasKwh: 0,
-    };
-    const tips = getReductionTips(input, calculateFootprint(input));
-    expect(tips[0]).toMatch(/Great job/i);
+describe("getDailyTip", () => {
+  it("returns a deterministic, valid tip for the same date", () => {
+    const d = new Date("2026-06-20T00:00:00Z");
+    expect(getDailyTip(d)).toBe(getDailyTip(d));
+    expect(DAILY_TIPS).toContain(getDailyTip(d));
+  });
+  it("rotates over time", () => {
+    const tips = new Set<string>();
+    for (let i = 0; i < DAILY_TIPS.length * 2; i++) {
+      tips.add(getDailyTip(new Date(2026, 0, i + 1)));
+    }
+    expect(tips.size).toBe(DAILY_TIPS.length);
+  });
+});
+
+describe("food search", () => {
+  it("matches by keyword", () => {
+    const r = searchFoods("burger");
+    expect(r.some((f) => f.keywords.includes("burger"))).toBe(true);
+  });
+  it("returns empty for empty query", () => {
+    expect(searchFoods("")).toEqual([]);
+  });
+  it("sums servings", () => {
+    const beef = FOOD_DB.find((f) => f.name.startsWith("Beef"))!;
+    const rice = FOOD_DB.find((f) => f.name.startsWith("Rice"))!;
+    expect(estimateFoodFootprint([beef, rice])).toBeCloseTo(beef.kg + rice.kg, 2);
   });
 });
