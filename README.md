@@ -1,6 +1,5 @@
 # 🌿 Serene: Your Personal Carbon Footprint Companion
 
-"Serene is a carbon tracking application designed to help users monitor and reduce their environmental impact through a clean, intuitive dashboard."
 
 [![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](https://opensource.org/license/proprietary)
 
